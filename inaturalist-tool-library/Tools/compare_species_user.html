@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compare iNaturalist Users</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 1em;
+      margin: auto;
+      max-width: 800px;
+    }
+
+    .top-menu {
+      margin-bottom: 1em;
+    }
+
+    .top-menu a {
+      text-decoration: none;
+      color: #0073e6;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+
+    h2, h3 {
+      font-size: 1.5em;
+      text-align: center;
+      margin-bottom: 1em;
+    }
+
+    label {
+      display: block;
+      margin: 0.5em 0 0.2em;
+      font-weight: bold;
+    }
+
+    .user-block, .location-block {
+      position: relative;
+      margin-bottom: 1.5em;
+    }
+
+    .user-avatar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 0.5em;
+    }
+
+    .user-avatar img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+
+    .clear-btn {
+      background: transparent;
+      border: none;
+      color: red;
+      font-size: 1.2em;
+      cursor: pointer;
+      margin-left: auto;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.6em;
+      font-size: 1em;
+      box-sizing: border-box;
+    }
+
+    .autocomplete-results {
+      border: 1px solid #ccc;
+      max-height: 200px;
+      overflow-y: auto;
+      background: #fff;
+      z-index: 2;
+      position: absolute;
+      width: 100%;
+    }
+
+    .autocomplete-item {
+      padding: 0.5em;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+
+    .autocomplete-item img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+
+    .autocomplete-item:hover {
+      background: #f0f0f0;
+    }
+
+    .location-selected {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 0.5em;
+    }
+
+    .quick-button, .compare-button {
+      display: inline-block;
+      margin-top: 0.5em;
+      padding: 0.6em 1em;
+      background: #0073e6;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+
+    .quick-button:hover, .compare-button:hover {
+      background: #005bb5;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 1em;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.6em;
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      .user-avatar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .clear-btn {
+        margin-top: 0.5em;
+      }
+
+      .location-selected {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-menu">
+    <a href="../index.html">← Back to Home</a>
+  </div>
+
+  <h2>Compare iNaturalist Users</h2>
+
+  <div class="user-block" id="user1-block">
+    <label for="user1">User 1</label>
+    <input type="text" id="user1" placeholder="Enter iNaturalist username" oninput="autocompleteUser('user1')" autocomplete="off">
+    <div id="user1-autocomplete" class="autocomplete-results"></div>
+    <div id="user1-info" class="user-avatar" style="display:none;">
+      <img id="user1-avatar" src="">
+      <span id="user1-name"></span>
+      <button class="clear-btn" onclick="clearUser('user1')">×</button>
+    </div>
+  </div>
+
+  <div class="user-block" id="user2-block">
+    <label for="user2">User 2</label>
+    <input type="text" id="user2" placeholder="Enter iNaturalist username" oninput="autocompleteUser('user2')" autocomplete="off">
+    <div id="user2-autocomplete" class="autocomplete-results"></div>
+    <div id="user2-info" class="user-avatar" style="display:none;">
+      <img id="user2-avatar" src="">
+      <span id="user2-name"></span>
+      <button class="clear-btn" onclick="clearUser('user2')">×</button>
+    </div>
+  </div>
+
+  <div class="location-block">
+    <label for="location">Location (optional)</label>
+    <input type="text" id="location" placeholder="Enter location" oninput="autocompleteLocation()" autocomplete="off">
+    <div id="location-autocomplete" class="autocomplete-results"></div>
+    <button class="quick-button" onclick="selectQuickLocation()">Quick Select: Grand-Duché de Luxembourg</button>
+    <div id="location-selected" class="location-selected" style="display: none;">
+      <span id="location-name">Selected: </span>
+      <button class="clear-btn" onclick="clearLocation()">×</button>
+    </div>
+  </div>
+
+  <button class="compare-button" onclick="compareUsers()">Compare Users</button>
+
+  <div id="comparison-section" style="display:none;">
+    <h3>Global User Stats</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th id="user1-header">User 1</th>
+          <th id="user2-header">User 2</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Observations</td>
+          <td id="comp-observations-user1"></td>
+          <td id="comp-observations-user2"></td>
+        </tr>
+        <tr>
+          <td>Species</td>
+          <td id="comp-species-user1"></td>
+          <td id="comp-species-user2"></td>
+        </tr>
+        <tr>
+          <td>Identifications</td>
+          <td id="comp-ids-user1"></td>
+          <td id="comp-ids-user2"></td>
+        </tr>
+        <tr>
+          <td>Joined</td>
+          <td id="comp-joined-user1"></td>
+          <td id="comp-joined-user2"></td>
+        </tr>
+        <tr>
+          <td>Site</td>
+          <td id="comp-site-user1"></td>
+          <td id="comp-site-user2"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="local-comparison-section" style="display:none;">
+    <h3>Local Species Comparison</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>User 1</th>
+          <th>User 2</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Total Species Observed (Local)</td>
+          <td id="local-total-user1"></td>
+          <td id="local-total-user2"></td>
+        </tr>
+        <tr>
+          <td>Species Only Observed by User 1</td>
+          <td id="local-only-user1"></td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Species Only Observed by User 2</td>
+          <td>—</td>
+          <td id="local-only-user2"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const userCache = {};
+
+    function autocompleteUser(fieldId) {
+      const input = document.getElementById(fieldId);
+      const container = document.getElementById(`${fieldId}-autocomplete`);
+      const query = input.value.trim();
+
+      if (query.length < 2) {
+        container.innerHTML = '';
+        return;
+      }
+
+      fetch(`https://api.inaturalist.org/v1/users/autocomplete?q=${query}`)
+        .then(res => res.json())
+        .then(data => {
+          container.innerHTML = '';
+          data.results.slice(0, 5).forEach(user => {
+            const item = document.createElement('div');
+            item.className = 'autocomplete-item';
+            item.innerHTML = `
+              <img src="${user.icon_url || 'https://www.inaturalist.org/assets/icon-user-default.png'}">
+              <span>${user.login}</span>
+            `;
+            item.onclick = () => {
+              input.value = user.login;
+              container.innerHTML = '';
+              userCache[fieldId] = user;
+              showUserInfo(fieldId, user);
+            };
+            container.appendChild(item);
+          });
+        });
+    }
+
+    function showUserInfo(fieldId, user) {
+      document.getElementById(`${fieldId}-info`).style.display = 'flex';
+      document.getElementById(`${fieldId}-avatar`).src = user.icon_url || 'https://www.inaturalist.org/assets/icon-user-default.png';
+      document.getElementById(`${fieldId}-name`).innerText = user.name || user.login;
+    }
+
+    function clearUser(fieldId) {
+      document.getElementById(fieldId).value = '';
+      document.getElementById(`${fieldId}-autocomplete`).innerHTML = '';
+      document.getElementById(`${fieldId}-info`).style.display = 'none';
+      delete userCache[fieldId];
+    }
+
+    function autocompleteLocation() {
+      const input = document.getElementById('location');
+      const query = input.value.trim();
+      const container = document.getElementById('location-autocomplete');
+
+      if (query.length < 2) {
+        container.innerHTML = '';
+        return;
+      }
+
+      fetch(`https://api.inaturalist.org/v2/places?q=${query}&per_page=5&fields=id,uuid,display_name`)
+        .then(res => res.json())
+        .then(data => {
+          container.innerHTML = '';
+          data.results.forEach(place => {
+            const item = document.createElement('div');
+            item.className = 'autocomplete-item';
+            item.innerHTML = `<span>${place.display_name}</span>`;
+            item.onclick = () => {
+              input.value = place.display_name;
+              input.dataset.placeId = place.id;
+              container.innerHTML = '';
+              setSelectedPlace(place.display_name, place.id);
+            };
+            container.appendChild(item);
+          });
+        });
+    }
+
+    function setSelectedPlace(name, id) {
+      const display = document.getElementById('location-selected');
+      document.getElementById('location-name').innerText = `Selected: ${name}`;
+      document.getElementById('location').dataset.placeId = id;
+      display.style.display = 'flex';
+    }
+
+    function clearLocation() {
+      document.getElementById('location').value = '';
+      document.getElementById('location').dataset.placeId = '';
+      document.getElementById('location-autocomplete').innerHTML = '';
+      document.getElementById('location-selected').style.display = 'none';
+    }
+
+    function selectQuickLocation() {
+      const name = 'Grand-Duché de Luxembourg, LU';
+      const id = '120582';
+      document.getElementById('location').value = name;
+      setSelectedPlace(name, id);
+    }
+
+    function compareUsers() {
+      const user1 = userCache['user1'];
+      const user2 = userCache['user2'];
+      if (!user1 || !user2) {
+        alert("Please select both users before comparing.");
+        return;
+      }
+
+      document.getElementById('comparison-section').style.display = 'none';
+      document.getElementById('local-comparison-section').style.display = 'none';
+
+      [user1, user2].forEach((u, i) => {
+        fetch(`https://api.inaturalist.org/v2/users/${u.login}?fields=observations_count,created_at,identifications_count,login,name,site.name,species_count`)
+          .then(res => res.json())
+          .then(data => {
+            const d = data.results[0];
+            document.getElementById(`user${i + 1}-header`).innerText = d.login;
+            document.getElementById(`comp-observations-user${i + 1}`).innerText = d.observations_count;
+            document.getElementById(`comp-species-user${i + 1}`).innerText = d.species_count;
+            document.getElementById(`comp-ids-user${i + 1}`).innerText = d.identifications_count;
+            document.getElementById(`comp-joined-user${i + 1}`).innerText = new Date(d.created_at).toLocaleDateString();
+            document.getElementById(`comp-site-user${i + 1}`).innerText = d.site?.name || "—";
+            document.getElementById('comparison-section').style.display = 'block';
+          });
+      });
+
+      runLocalSpeciesComparison(user1.login, user2.login);
+    }
+
+    function runLocalSpeciesComparison(user1, user2) {
+      const placeId = document.getElementById('location').dataset.placeId || null;
+      const base = `https://api.inaturalist.org/v2/observations/species_counts`;
+
+      const queries = [
+        { url: `${base}?user_id=${user1}${placeId ? `&place_id=${placeId}` : ''}`, target: 'local-total-user1' },
+        { url: `${base}?user_id=${user2}${placeId ? `&place_id=${placeId}` : ''}`, target: 'local-total-user2' },
+        { url: `${base}?user_id=${user1}&unobserved_by_user_id=${user2}${placeId ? `&place_id=${placeId}` : ''}&page=1&per_page=0`, target: 'local-only-user1' },
+        { url: `${base}?user_id=${user2}&unobserved_by_user_id=${user1}${placeId ? `&place_id=${placeId}` : ''}&page=1&per_page=0`, target: 'local-only-user2' },
+      ];
+
+      let loaded = 0;
+      queries.forEach(q => {
+        fetch(q.url).then(res => res.json()).then(data => {
+          document.getElementById(q.target).innerText = data.total_results ?? '—';
+          if (++loaded === 4) {
+            document.getElementById('local-comparison-section').style.display = 'block';
+          }
+        }).catch(() => {
+          document.getElementById(q.target).innerText = 'Error';
+        });
+      });
+    }
+  </script>
+</body>
+</html>
