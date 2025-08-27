@@ -2,7 +2,9 @@
 layout: default
 title: iNaturalist Tool Library
 ---
-
+<link rel="stylesheet" href="{{ site.baseurl }}/assets/style.css">
+<div id="tool-container">
+  <!-- Your content here -->
 <div id="tool-container"></div>
 
 <script>
@@ -157,3 +159,4 @@ title: iNaturalist Tool Library
     color: #333;
   }
 </style>
+
