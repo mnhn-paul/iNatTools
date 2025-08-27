@@ -2,3 +2,14 @@ title: iNaturalist Tool Library
 description: A collection of tools for biodiversity data and iNaturalist.
 theme: jekyll-theme-minimal
 baseurl: "/iNatTools" # This is important for GitHub Pages if your repo is not named username.github.io
+url: "https://mnhn-paul.github.io"
+
+# Navigation menu
+nav:
+  - name: "Home"
+    link: "/"
+  - name: "Tools"
+    link: "/"
+  - name: "Useful Links"
+    link: "/pages/links.html"
+
